@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
@@ -14,6 +14,7 @@ const tempHome = path.join(tempRoot, "home");
 const tempWorktree = path.join(tempRoot, "worktree");
 const tempBin = path.join(tempRoot, "bin");
 const tempOldBin = path.join(tempRoot, "old-bin");
+const tempPidFile = path.join(tempRoot, "children.pid");
 
 try {
   await mkdir(tempHome, { recursive: true });
@@ -27,12 +28,12 @@ try {
   await createFakeCursorAgent(tempBin);
   await createFakeCodex(tempBin);
 
-  const result = await runMcpSmoke(tempHome, tempWorktree, [tempOldBin, tempBin]);
+  const result = await runMcpSmoke(tempHome, tempWorktree, [tempOldBin, tempBin], tempPidFile);
   console.log(JSON.stringify(result, null, 2));
 
   if (
     result.stderr
-    || result.serverVersion !== "0.5.0"
+    || result.serverVersion !== "0.5.1"
     || result.discoveryCount < 1
     || result.runStatus !== "completed"
     || result.adapterStatus !== "opencode_acp"
@@ -56,10 +57,18 @@ try {
     || result.cancelStatus !== "cancelled"
     || result.cancelActiveProcessCancelled !== true
     || result.cancelledJobStatus !== "cancelled"
+    || result.orphanStartStatus !== "running"
+    || result.orphanRecoveredStatus !== "orphaned"
+    || !result.orphanRecoveredSummary?.includes("orphaned")
+    || !result.orphanRecoveredEvents?.includes("orphaned")
+    || result.orphanRecoveredSessionStatus !== "orphaned"
+    || result.restartFollowupStatus !== "completed"
+    || result.restartFollowupAdapterStatus !== "claude_cli"
   ) {
     process.exitCode = 1;
   }
 } finally {
+  await killRecordedPids(tempPidFile);
   await rm(tempRoot, { force: true, recursive: true });
 }
 
@@ -121,7 +130,10 @@ if (process.env.AGENT_DISPATCHER_SMOKE_INHERITED !== "yes") {
   console.error("expected inherited environment");
   process.exit(1);
 }
-if (process.argv.join(" ").includes("Smoke async cancel")) {
+if (process.argv.join(" ").includes("Smoke async cancel") || process.argv.join(" ").includes("Smoke orphan recovery")) {
+  if (process.env.AGENT_DISPATCHER_SMOKE_PID_FILE) {
+    require("node:fs").appendFileSync(process.env.AGENT_DISPATCHER_SMOKE_PID_FILE, String(process.pid) + "\\n");
+  }
   setInterval(() => {}, 1000);
 } else {
   console.log(JSON.stringify({ type: "assistant", session_id: "fake-claude-session", message: { content: [{ type: "text", text: "Fake Claude completed." }] } }));
@@ -157,21 +169,10 @@ console.log(JSON.stringify({ type: "agent_message", session_id: "fake-codex-sess
   await chmod(scriptPath, 0o755);
 }
 
-async function runMcpSmoke(home, worktree, binDirs) {
+async function runMcpSmoke(home, worktree, binDirs, pidFile) {
   const { spawn } = await import("node:child_process");
-  const child = spawn("node", ["./mcp/server.mjs"], {
-    cwd: repoRoot,
-    stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, HOME: home, PATH: `${binDirs.join(path.delimiter)}${path.delimiter}${process.env.PATH ?? ""}`, AGENT_DISPATCHER_SMOKE_INHERITED: "yes" }
-  });
-  let stdout = "";
-  let stderr = "";
-  child.stdout.on("data", (chunk) => {
-    stdout += chunk.toString();
-  });
-  child.stderr.on("data", (chunk) => {
-    stderr += chunk.toString();
-  });
+  const first = startMcpServer({ home, binDirs, pidFile, spawn });
+  const { child } = first;
 
   send(child, {
     jsonrpc: "2.0",
@@ -219,7 +220,7 @@ async function runMcpSmoke(home, worktree, binDirs) {
     }
   });
 
-  await waitForMessage(() => parseMessages(stdout).find((message) => message.id === 4), 3000);
+  await waitForMessage(() => parseMessages(first.stdout).find((message) => message.id === 4), 3000);
   send(child, {
     jsonrpc: "2.0",
     id: 5,
@@ -236,7 +237,7 @@ async function runMcpSmoke(home, worktree, binDirs) {
       }
     }
   });
-  await waitForMessage(() => parseMessages(stdout).find((message) => message.id === 5), 4000);
+  await waitForMessage(() => parseMessages(first.stdout).find((message) => message.id === 5), 4000);
   send(child, {
     jsonrpc: "2.0",
     id: 6,
@@ -252,7 +253,7 @@ async function runMcpSmoke(home, worktree, binDirs) {
       }
     }
   });
-  await waitForMessage(() => parseMessages(stdout).find((message) => message.id === 6), 10_000);
+  await waitForMessage(() => parseMessages(first.stdout).find((message) => message.id === 6), 10_000);
   send(child, {
     jsonrpc: "2.0",
     id: 7,
@@ -268,7 +269,7 @@ async function runMcpSmoke(home, worktree, binDirs) {
       }
     }
   });
-  await waitForMessage(() => parseMessages(stdout).find((message) => message.id === 7), 10_000);
+  await waitForMessage(() => parseMessages(first.stdout).find((message) => message.id === 7), 10_000);
   send(child, {
     jsonrpc: "2.0",
     id: 8,
@@ -284,7 +285,7 @@ async function runMcpSmoke(home, worktree, binDirs) {
       }
     }
   });
-  await waitForMessage(() => parseMessages(stdout).find((message) => message.id === 8), 10_000);
+  await waitForMessage(() => parseMessages(first.stdout).find((message) => message.id === 8), 10_000);
   send(child, {
     jsonrpc: "2.0",
     id: 9,
@@ -301,7 +302,7 @@ async function runMcpSmoke(home, worktree, binDirs) {
       }
     }
   });
-  const asyncStart = await waitForMessage(() => parseMessages(stdout).find((message) => message.id === 9), 3000);
+  const asyncStart = await waitForMessage(() => parseMessages(first.stdout).find((message) => message.id === 9), 3000);
   const asyncStartResult = parseToolResult(asyncStart);
   send(child, {
     jsonrpc: "2.0",
@@ -315,7 +316,7 @@ async function runMcpSmoke(home, worktree, binDirs) {
       }
     }
   });
-  await waitForMessage(() => parseMessages(stdout).find((message) => message.id === 10), 3000);
+  await waitForMessage(() => parseMessages(first.stdout).find((message) => message.id === 10), 3000);
   send(child, {
     jsonrpc: "2.0",
     id: 11,
@@ -327,19 +328,99 @@ async function runMcpSmoke(home, worktree, binDirs) {
       }
     }
   });
-  await waitForMessage(() => parseMessages(stdout).find((message) => message.id === 11), 3000);
-  child.kill("SIGTERM");
+  await waitForMessage(() => parseMessages(first.stdout).find((message) => message.id === 11), 3000);
+  send(child, {
+    jsonrpc: "2.0",
+    id: 12,
+    method: "tools/call",
+    params: {
+      name: "run_coding_agent",
+      arguments: {
+        agent: "claude",
+        worktree,
+        prompt: "Smoke orphan recovery",
+        async: true,
+        timeoutSec: 30,
+        permissionProfile: "workspace_write"
+      }
+    }
+  });
+  const orphanStart = await waitForMessage(() => parseMessages(first.stdout).find((message) => message.id === 12), 3000);
+  const orphanStartResult = parseToolResult(orphanStart);
+  child.kill("SIGKILL");
+  await waitForExit(child, 3000);
 
-  const messages = parseMessages(stdout);
+  const second = startMcpServer({ home, binDirs, pidFile, spawn });
+  send(second.child, {
+    jsonrpc: "2.0",
+    id: 101,
+    method: "initialize",
+    params: {
+      protocolVersion: "2024-11-05",
+      capabilities: {},
+      clientInfo: { name: "smoke-restart", version: "0.0.0" }
+    }
+  });
+  send(second.child, {
+    jsonrpc: "2.0",
+    id: 102,
+    method: "tools/call",
+    params: {
+      name: "get_coding_agent_job",
+      arguments: {
+        jobId: orphanStartResult?.jobId
+      }
+    }
+  });
+  await waitForMessage(() => parseMessages(second.stdout).find((message) => message.id === 102), 3000);
+  send(second.child, {
+    jsonrpc: "2.0",
+    id: 103,
+    method: "tools/call",
+    params: {
+      name: "list_coding_agent_sessions",
+      arguments: {
+        worktree,
+        includeArchived: true
+      }
+    }
+  });
+  await waitForMessage(() => parseMessages(second.stdout).find((message) => message.id === 103), 3000);
+  send(second.child, {
+    jsonrpc: "2.0",
+    id: 104,
+    method: "tools/call",
+    params: {
+      name: "run_coding_agent",
+      arguments: {
+        agent: "claude",
+        worktree,
+        prompt: "Smoke restart recovery followup",
+        async: false,
+        permissionProfile: "workspace_write"
+      }
+    }
+  });
+  await waitForMessage(() => parseMessages(second.stdout).find((message) => message.id === 104), 10_000);
+  second.child.kill("SIGTERM");
+  await waitForExit(second.child, 3000);
+
+  const messages = parseMessages(first.stdout);
+  const restartMessages = parseMessages(second.stdout);
   const parsedToolResults = Object.fromEntries(
     messages
+      .filter((message) => message.result?.content?.[0]?.text)
+      .map((message) => [message.id, JSON.parse(message.result.content[0].text)])
+  );
+  const parsedRestartToolResults = Object.fromEntries(
+    restartMessages
       .filter((message) => message.result?.content?.[0]?.text)
       .map((message) => [message.id, JSON.parse(message.result.content[0].text)])
   );
   const init = messages.find((message) => message.id === 1);
 
   return {
-    stderr: stderr.trim(),
+    stderr: `${first.stderr}${second.stderr}`.trim(),
     serverVersion: init?.result?.serverInfo?.version,
     discoveryCount: parsedToolResults[3]?.agents?.length ?? 0,
     claudeDiscoveredVersion: parsedToolResults[3]?.agents?.find((agent) => agent.id === "claude")?.version,
@@ -368,8 +449,42 @@ async function runMcpSmoke(home, worktree, binDirs) {
     cancelStatus: parsedToolResults[10]?.status,
     cancelActiveProcessCancelled: parsedToolResults[10]?.activeProcessCancelled,
     cancelledJobStatus: parsedToolResults[11]?.job?.status,
+    orphanStartStatus: parsedToolResults[12]?.status,
+    orphanStartJobId: parsedToolResults[12]?.jobId,
+    orphanRecoveredStatus: parsedRestartToolResults[102]?.job?.status,
+    orphanRecoveredSummary: parsedRestartToolResults[102]?.job?.resultSummary,
+    orphanRecoveredEvents: parsedRestartToolResults[102]?.job?.recentEvents?.map((event) => event.type),
+    orphanRecoveredSessionStatus: parsedRestartToolResults[103]?.sessions
+      ?.find((session) => session.lastJobId === parsedToolResults[12]?.jobId)?.status,
+    restartFollowupStatus: parsedRestartToolResults[104]?.status,
+    restartFollowupAdapterStatus: parsedRestartToolResults[104]?.adapterStatus,
     isGitRepository: parsedToolResults[4]?.worktreeState?.after?.isGitRepository
   };
+}
+
+function startMcpServer({ home, binDirs, pidFile, spawn }) {
+  const state = {
+    stdout: "",
+    stderr: "",
+    child: spawn("node", ["./mcp/server.mjs"], {
+      cwd: repoRoot,
+      stdio: ["pipe", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${binDirs.join(path.delimiter)}${path.delimiter}${process.env.PATH ?? ""}`,
+        AGENT_DISPATCHER_SMOKE_INHERITED: "yes",
+        AGENT_DISPATCHER_SMOKE_PID_FILE: pidFile
+      }
+    })
+  };
+  state.child.stdout.on("data", (chunk) => {
+    state.stdout += chunk.toString();
+  });
+  state.child.stderr.on("data", (chunk) => {
+    state.stderr += chunk.toString();
+  });
+  return state;
 }
 
 async function waitForMessage(getMessage, timeoutMs) {
@@ -385,6 +500,33 @@ async function waitForMessage(getMessage, timeoutMs) {
 function send(child, message) {
   const body = JSON.stringify(message);
   child.stdin.write(`Content-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`);
+}
+
+async function waitForExit(child, timeoutMs) {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  await Promise.race([
+    new Promise((resolve) => child.once("exit", resolve)),
+    new Promise((resolve) => setTimeout(resolve, timeoutMs))
+  ]);
+}
+
+async function killRecordedPids(pidFile) {
+  let raw = "";
+  try {
+    raw = await readFile(pidFile, "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT") return;
+    throw error;
+  }
+  for (const value of raw.split(/\r?\n/)) {
+    const pid = Number.parseInt(value, 10);
+    if (!Number.isFinite(pid) || pid <= 0) continue;
+    try {
+      process.kill(pid, "SIGTERM");
+    } catch {
+      continue;
+    }
+  }
 }
 
 function parseToolResult(message) {

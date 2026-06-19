@@ -15,12 +15,15 @@ This repository is an alpha implementation. It can:
 - run OpenCode through ACP stdio when external launch is explicitly enabled.
 - run Claude Code, Cursor Agent, and Codex CLI through CLI fallback adapters.
 - launch supported adapters synchronously or as background jobs with cancellable in-memory process tracking.
+- recover jobs orphaned by an MCP server restart so stale `running` jobs do not keep worktrees locked.
 - surface ACP session config options and available model choices without setting a model by default.
 - return ACP adapter failures in `failureReason` and `agentErrors`, including provider-side errors such as balance or rate-limit failures.
 
 The dispatcher does not set an ACP model by default. When an ACP agent exposes session `configOptions`, the OpenCode adapter records summarized options and returns model choices in `availableModels`; failures include the same data so Codex can ask the user which model to retry with.
 
 External launch is disabled by default. `run_coding_agent` records a completed `record_only` job unless `launchExternalAgents` is enabled. Runnable adapters support both `async=false` synchronous execution and `async=true` background execution. `cancel_coding_agent_job` terminates active in-memory child processes for jobs started by the current MCP server process.
+
+On MCP server restart, the dispatcher checks the JSON registry before first config or registry use. Jobs left in `queued`, `starting`, or `running` that are not owned by the current server process are marked `orphaned`, their sessions move back to `idle` when resumable or `orphaned` otherwise, and the worktree lock is released for new jobs.
 
 External agent processes inherit the dispatcher process environment by default, matching direct terminal usage for tools such as Claude Code. Set `inheritEnvironment=false` through `configure_coding_agent_dispatcher` to restrict child process environment variables to the minimal dispatcher allowlist.
 

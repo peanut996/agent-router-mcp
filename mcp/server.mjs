@@ -8,7 +8,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 const SERVER_NAME = "acp-coding-agent-dispatcher";
-const SERVER_VERSION = "0.5.0";
+const SERVER_VERSION = "0.5.1";
 const DATA_DIR = process.env.AGENT_DISPATCHER_DATA_DIR
   ? path.resolve(process.env.AGENT_DISPATCHER_DATA_DIR)
   : path.join(os.homedir(), ".codex", "agent-dispatcher");
@@ -19,6 +19,9 @@ const COMMAND_TIMEOUT_MS = 3000;
 const ACP_STARTUP_DELAY_MS = 300;
 const execFileAsync = promisify(execFile);
 const ACTIVE_RUNS = new Map();
+const ACTIVE_JOB_STATUSES = new Set(["queued", "starting", "running"]);
+const TERMINAL_JOB_STATUSES = new Set(["completed", "failed", "cancelled", "timed_out", "orphaned"]);
+let orphanRecoveryPromise = null;
 
 const TOOL_DEFINITIONS = [
   {
@@ -663,7 +666,7 @@ async function cancelJob(args) {
   const job = registry.jobs[args.jobId];
   if (!job) return { jobId: args.jobId, status: "not_found" };
   let activeProcessCancelled = false;
-  if (!["completed", "failed", "cancelled", "timed_out"].includes(job.status)) {
+  if (!TERMINAL_JOB_STATUSES.has(job.status)) {
     const activeRun = ACTIVE_RUNS.get(job.jobId);
     if (activeRun) {
       activeProcessCancelled = true;
@@ -732,6 +735,7 @@ async function archiveSession(args) {
 }
 
 async function readConfig() {
+  await ensureOrphanRecovery();
   const defaults = {
     defaultAgent: null,
     modeDefaults: {},
@@ -760,11 +764,94 @@ async function readConfig() {
 }
 
 async function readRegistry() {
+  await ensureOrphanRecovery();
   return readJson(REGISTRY_PATH, { jobs: {}, sessions: {} });
 }
 
 async function writeRegistry(registry) {
   await writeJson(REGISTRY_PATH, registry);
+}
+
+async function ensureOrphanRecovery() {
+  if (!orphanRecoveryPromise) {
+    orphanRecoveryPromise = recoverOrphanedJobs().catch((error) => {
+      orphanRecoveryPromise = null;
+      throw error;
+    });
+  }
+  return orphanRecoveryPromise;
+}
+
+async function recoverOrphanedJobs() {
+  const registry = await readJson(REGISTRY_PATH, { jobs: {}, sessions: {} });
+  registry.jobs = isPlainObject(registry.jobs) ? registry.jobs : {};
+  registry.sessions = isPlainObject(registry.sessions) ? registry.sessions : {};
+  const recoveredAt = new Date().toISOString();
+  const logEntries = [];
+  let recoveredCount = 0;
+
+  for (const job of Object.values(registry.jobs)) {
+    if (!isPlainObject(job)) continue;
+    if (!ACTIVE_JOB_STATUSES.has(job.status) || ACTIVE_RUNS.has(job.jobId)) continue;
+    const previousStatus = job.status;
+    const message = "Dispatcher marked this job orphaned during MCP server restart recovery; the previous runner process is no longer owned by this server.";
+    const event = {
+      type: "orphaned",
+      timestamp: recoveredAt,
+      message,
+      previousStatus
+    };
+    job.status = "orphaned";
+    job.endedAt = job.endedAt ?? recoveredAt;
+    job.orphanedAt = recoveredAt;
+    job.failureReason = message;
+    job.resultSummary = message;
+    job.risks = [
+      "The original agent process may have continued after the MCP server exited; inspect the worktree if results look unexpected."
+    ];
+    job.recentEvents = [...(Array.isArray(job.recentEvents) ? job.recentEvents : []), event];
+    updateSessionAfterOrphanedJob(registry, job, recoveredAt);
+    if (typeof job.logPath === "string" && job.logPath) {
+      logEntries.push({
+        logPath: job.logPath,
+        event: {
+          ...event,
+          jobId: job.jobId,
+          sessionId: job.sessionId,
+          agentId: job.agentId
+        }
+      });
+    }
+    recoveredCount += 1;
+  }
+
+  if (recoveredCount === 0) {
+    return { recoveredCount: 0 };
+  }
+
+  await writeJson(REGISTRY_PATH, registry);
+  for (const entry of logEntries) {
+    await appendJsonl(entry.logPath, [entry.event]);
+  }
+  return { recoveredCount };
+}
+
+function updateSessionAfterOrphanedJob(registry, job, recoveredAt) {
+  const session = registry.sessions[job.sessionId];
+  if (!isPlainObject(session)) return;
+  const hasCurrentOwnedRun = Object.values(registry.jobs).some((candidate) => (
+    isPlainObject(candidate)
+    && candidate.sessionId === session.sessionId
+    && ACTIVE_JOB_STATUSES.has(candidate.status)
+    && ACTIVE_RUNS.has(candidate.jobId)
+  ));
+  if (hasCurrentOwnedRun) return;
+  if (session.lastJobId !== job.jobId && !ACTIVE_JOB_STATUSES.has(session.status)) return;
+
+  const canContinue = Boolean(session.providerSessionId);
+  session.status = canContinue ? "idle" : "orphaned";
+  session.canContinue = canContinue;
+  session.updatedAt = recoveredAt;
 }
 
 async function readJson(filePath, fallback) {
@@ -970,7 +1057,7 @@ function findActiveWorktreeJob(registry, worktree, permissionProfile) {
   return Object.values(registry.jobs).find((job) => (
     job.worktree === worktree
     && job.permissionProfile !== "plan"
-    && ["queued", "starting", "running"].includes(job.status)
+    && ACTIVE_JOB_STATUSES.has(job.status)
   )) ?? null;
 }
 
