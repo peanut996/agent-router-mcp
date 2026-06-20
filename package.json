@@ -1,5 +1,5 @@
 {
-  "name": "agent-router-mcp",
+  "name": "acp-router",
   "version": "0.8.0",
   "description": "Generic MCP server for routing coding tasks to local ACP agents. Works with any MCP client (Claude Desktop, Cursor, Windsurf, Codex, etc.).",
   "license": "MIT",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/peanut996/agent-router-mcp.git"
+    "url": "git+https://github.com/peanut996/acp-router.git"
   },
   "keywords": [
     "mcp",
@@ -20,8 +20,8 @@
   ],
   "type": "module",
   "bin": {
-    "agent-router-mcp": "bin/agent-router.mjs",
-    "agent-router": "bin/agent-router-cli.mjs"
+    "acp-router": "bin/acp-router.mjs",
+    "acp-router-cli": "bin/acp-router-cli.mjs"
   },
   "main": "./mcp/server.mjs",
   "files": [
@@ -31,9 +31,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "start": "node ./bin/agent-router.mjs",
+    "start": "node ./bin/acp-router.mjs",
     "start:mcp": "node ./mcp/server.mjs",
-    "check": "node --check ./bin/agent-router.mjs && node --check ./bin/agent-router-cli.mjs && node --check ./mcp/constants.mjs && node --check ./mcp/utils.mjs && node --check ./mcp/storage.mjs && node --check ./mcp/agents.mjs && node --check ./mcp/acp-client.mjs && node --check ./mcp/jobs.mjs && node --check ./mcp/server.mjs && node -e \"import('./mcp/server.mjs')\""
+    "check": "node --check ./bin/acp-router.mjs && node --check ./bin/acp-router-cli.mjs && node --check ./mcp/constants.mjs && node --check ./mcp/utils.mjs && node --check ./mcp/storage.mjs && node --check ./mcp/agents.mjs && node --check ./mcp/acp-client.mjs && node --check ./mcp/jobs.mjs && node --check ./mcp/server.mjs && node -e \"import('./mcp/server.mjs')\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0"

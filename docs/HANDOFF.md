@@ -1,20 +1,20 @@
-# Agent Router Handoff
+# ACP Router Handoff
 
 Last updated: 2026-06-20, Asia/Shanghai
 
 ## Snapshot
 
-- Product name: Agent Router
-- Package name: `agent-router-mcp` (npm)
-- Repo: `https://github.com/peanut996/agent-router-mcp`
-- Local repo: `/Users/peanut996/Workspace/codex-agent-router` (worktree on branch `chore/rename-to-agent-router-mcp`)
+- Product name: ACP Router
+- Package name: `acp-router` (npm)
+- Repo: `https://github.com/peanut996/acp-router`
+- Local repo: `/Users/peanut996/Workspace/acp-router` (worktree on branch `chore/rename-to-acp-router`)
 - Default branch: `master`
 - Current version: `0.7.0`
-- MCP server name: `agent-router`
+- MCP server name: `acp-router`
 - MCP server transport: stdio
-- bin entry: `agent-router-mcp` via `./bin/agent-router.mjs`
+- bin entry: `acp-router` via `./bin/acp-router.mjs`
 - MCP SDK: `@modelcontextprotocol/sdk` ^1.29.0
-- Data directory: `~/.agent-router/`
+- Data directory: `~/.acp-router/`
 
 ## Source Inventory
 
@@ -35,7 +35,7 @@ Deleted files (no longer relevant after refactor):
 
 ## Product Boundary
 
-Agent Router is a generic MCP server for routing coding tasks to local ACP agents. It works with any MCP-compatible client (Claude Desktop, Cursor, Windsurf, Codex, etc.) and is no longer tied to Codex as a plugin.
+ACP Router is a generic MCP server for routing coding tasks to local ACP agents. It works with any MCP-compatible client (Claude Desktop, Cursor, Windsurf, Codex, etc.) and is no longer tied to Codex as a plugin.
 
 In scope:
 
@@ -46,7 +46,7 @@ In scope:
 - Track jobs, sessions, event logs, process PID metadata, changed files, and failure reasons.
 - List, continue, cancel, archive, and tail jobs/sessions through MCP tools.
 - Automatic npx fallback when an ACP executable is not on PATH but the registry has an npx distribution.
-- Recursion guard via `AGENT_ROUTER_DEPTH` env var (max depth 3).
+- Recursion guard via `ACP_ROUTER_DEPTH` env var (max depth 3).
 
 Out of scope:
 
@@ -58,7 +58,7 @@ Out of scope:
 
 ## Implemented MCP Tools
 
-Agent Router exposes 8 MCP tools (consolidated from 11 in v0.6.8):
+ACP Router exposes 8 MCP tools (consolidated from 11 in v0.6.8):
 
 - `discover_agents` -- discover local coding agents and ACP status
 - `manage_config` -- get/set config (action: "get" | "set")
@@ -94,7 +94,7 @@ Agent Router exposes 8 MCP tools (consolidated from 11 in v0.6.8):
 | ACP Registry metadata | Done | Reads registry metadata, caches it locally, exposes ids/icons/versions/install hints. No auto-install. |
 | npx fallback | Done | When ACP executable not on PATH but registry has npx distribution, auto-launches via `npx --yes <package>`. |
 | ACP-only mode | Done | CLI fallback removed. Agents without ACP hard-fail with install hint. |
-| Recursion guard | Done | `AGENT_ROUTER_DEPTH` env var, max depth 3. Prevents infinite agent dispatch loops. |
+| Recursion guard | Done | `ACP_ROUTER_DEPTH` env var, max depth 3. Prevents infinite agent dispatch loops. |
 | Default config | Done | `launchExternalAgents=true` and `inheritEnvironment=true` by default; per-call overrides available. |
 | Run jobs | Done | Sync and async runs supported. Worktree must be existing absolute path. ACP-only. |
 | Job tracking | Done | Registry records job/session state, process PID metadata, status, changed files, logs, and errors. |
@@ -119,7 +119,7 @@ Agent Router exposes 8 MCP tools (consolidated from 11 in v0.6.8):
 - `v0.6.6`: added `tail_coding_agent_job_events` for near-real-time polling.
 - `v0.6.7`: added ACP Registry metadata/cache, ACP-first routing for OpenCode/Claude/Codex, generalized ACP stdio execution and native session-list aggregation.
 - `v0.6.8`: added real no-model ACP adapter handshake smoke for `claude-agent-acp` and `codex-acp`, registry version fallback for ACP adapters that do not support version probing, and PATH-priority fixes for equal/unknown versions.
-- `v0.7.0`: refactor from Codex-specific plugin to generic MCP server. Repo/package renamed `codex-agent-router` to `agent-router-mcp`. Codex plugin packaging removed. MCP server migrated to `@modelcontextprotocol/sdk`. Data directory changed from `~/.codex/agent-router/` to `~/.agent-router/`. Tools consolidated from 11 to 8. ACP-only mode (CLI fallback removed). npx fallback for ACP adapters. Recursion guard via `AGENT_ROUTER_DEPTH`. Hard cut, no backward compatibility with v0.6.x data.
+- `v0.7.0`: refactor from Codex-specific plugin to generic MCP server. Repo/package renamed from `codex-agent-router` to `acp-router`. Codex plugin packaging removed. MCP server migrated to `@modelcontextprotocol/sdk`. Data directory changed from `~/.codex/agent-router/` to `~/.acp-router/`. Tools consolidated from 11 to 8. ACP-only mode (CLI fallback removed). npx fallback for ACP adapters. Recursion guard via `ACP_ROUTER_DEPTH`. Hard cut, no backward compatibility with v0.6.x data.
 
 ## Latest Validation Evidence
 
@@ -140,11 +140,11 @@ Note: smoke and e2e scripts were removed in v0.7.2 in favor of `npm run check` p
 
 ## Important Runtime Paths
 
-- Config: `~/.agent-router/config.json`
-- Job/session registry: `~/.agent-router/registry.json`
-- Logs: `~/.agent-router/logs/`
-- ACP Registry cache: `~/.agent-router/acp-registry-cache.json`
-- Override: set `AGENT_ROUTER_DATA_DIR` env var to use a custom data directory.
+- Config: `~/.acp-router/config.json`
+- Job/session registry: `~/.acp-router/registry.json`
+- Logs: `~/.acp-router/logs/`
+- ACP Registry cache: `~/.acp-router/acp-registry-cache.json`
+- Override: set `ACP_ROUTER_DATA_DIR` env var to use a custom data directory.
 
 ## Current Defaults
 
@@ -157,23 +157,23 @@ Note: smoke and e2e scripts were removed in v0.7.2 in favor of `npm run check` p
 - Registry enabled by default.
 - Registry URL: `https://cdn.agentclientprotocol.com/registry/v1/latest/registry.json`
 - Registry cache TTL: 86400 seconds (24 hours).
-- Max recursion depth: 3 (`AGENT_ROUTER_DEPTH`).
+- Max recursion depth: 3 (`ACP_ROUTER_DEPTH`).
 
 ## Known Gaps
 
-1. npm package `agent-router-mcp` is not yet published to npm. The `npx agent-router-mcp` command will not work until the package is published. Use a local clone or `npm link` in the meantime.
-2. GitHub repo has not been renamed yet. The repo is still `peanut996/codex-agent-router` on GitHub; `package.json` already references `peanut996/agent-router-mcp`. The rename needs to happen on GitHub.
+1. npm package `acp-router` is not yet published to npm. The `npx acp-router` command will not work until the package is published. Use a local clone or `npm link` in the meantime.
+2. GitHub repo has not been renamed yet. The repo is still `peanut996/codex-agent-router` on GitHub; `package.json` already references `peanut996/acp-router`. The rename needs to happen on GitHub.
 3. Dead CLI fallback code still exists in `mcp/server.mjs` (`runCliFallbackJob`, `getCliAdapterSpec`, CLI adapter specs in `BUILT_IN_AGENTS`). The CLI fallback is never called at runtime (ACP-only enforcement blocks it), but the code has not been cleaned up.
 4. Real ACP prompt/file-edit E2E for `claude-agent-acp` and `codex-acp` via the npx fallback path has not yet been documented as passed. Smoke tests use fake commands.
 5. Native ACP session-list behavior is proven for OpenCode. Other ACP adapters need real session-list/continue acceptance.
-6. Registry-driven adapter expansion is still manual. Only known local routes are mapped into Agent Router profiles today.
+6. Registry-driven adapter expansion is still manual. Only known local routes are mapped into ACP Router profiles today.
 7. No automatic adapter installation. Registry install hints are surfaced, but users install tools themselves.
 
 ## Recommended Next Work
 
-1. Publish `agent-router-mcp` to npm so `npx agent-router-mcp` works out of the box.
+1. Publish `acp-router` to npm so `npx acp-router` works out of the box.
 
-2. Rename the GitHub repo from `peanut996/codex-agent-router` to `peanut996/agent-router-mcp` and update any remaining references.
+2. Rename the GitHub repo from `peanut996/codex-agent-router` to `peanut996/acp-router` and update any remaining references.
 
 3. Clean up dead CLI fallback code in `mcp/server.mjs`:
    - Remove `runCliFallbackJob` function.
@@ -186,10 +186,10 @@ Note: smoke and e2e scripts were removed in v0.7.2 in favor of `npm run check` p
    - Verify `npx --yes codex-acp` launches and completes a file-edit task.
    - Confirm provider session id, changed files, log path, and failure surfacing.
 
-5. In a fresh MCP client session, confirm Agent Router tools are injected:
+5. In a fresh MCP client session, confirm ACP Router tools are injected:
 
    ```text
-   Use Agent Router. First call discover_agents.
+   Use ACP Router. First call discover_agents.
    If you cannot see run_agent or discover_agents, report that tools are not injected.
    ```
 
@@ -210,27 +210,27 @@ Note: smoke and e2e scripts were removed in v0.7.2 in favor of `npm run check` p
 Copy this into a new session:
 
 ```text
-Continue Agent Router development.
+Continue ACP Router development.
 
-Repo: /Users/peanut996/Workspace/codex-agent-router
-Branch: chore/rename-to-agent-router-mcp
-GitHub: https://github.com/peanut996/agent-router-mcp
+Repo: /Users/peanut996/Workspace/acp-router
+Branch: chore/rename-to-acp-router
+GitHub: https://github.com/peanut996/acp-router
 Current version: 0.7.0
-npm package: agent-router-mcp (not yet published)
+npm package: acp-router (not yet published)
 
 Do these first:
-1. git -C /Users/peanut996/Workspace/codex-agent-router status
-2. Confirm branch is chore/rename-to-agent-router-mcp.
-3. Use Agent Router. First call discover_agents.
+1. git -C /Users/peanut996/Workspace/acp-router status
+2. Confirm branch is chore/rename-to-acp-router.
+3. Use ACP Router. First call discover_agents.
 4. If you cannot see discover_agents or run_agent, report that tools are not injected.
 
 Current product state:
 - Generic MCP server, works with any MCP client (Claude Desktop, Cursor, Windsurf, Codex, etc.).
 - MCP server built on @modelcontextprotocol/sdk.
-- Data directory: ~/.agent-router/
+- Data directory: ~/.acp-router/
 - ACP-only mode. CLI fallback removed.
 - npx fallback when ACP executable not on PATH but registry has npx distribution.
-- Recursion guard: AGENT_ROUTER_DEPTH, max depth 3.
+- Recursion guard: ACP_ROUTER_DEPTH, max depth 3.
 - 8 tools: discover_agents, manage_config, run_agent, list_jobs, get_job, tail_job_events, cancel_job, manage_sessions.
 - OpenCode: native ACP.
 - Claude: ACP via claude-agent-acp or npx fallback.
@@ -239,8 +239,8 @@ Current product state:
 - ACP Registry metadata/cache integrated.
 
 Next priorities:
-- Publish agent-router-mcp to npm.
-- Rename GitHub repo from codex-agent-router to agent-router-mcp.
+- Publish acp-router to npm.
+- Rename GitHub repo from codex-agent-router to acp-router.
 - Clean up dead CLI fallback code in mcp/server.mjs.
 - Run real ACP prompt/file-edit E2E for Claude and Codex via npx fallback.
 ```
@@ -249,13 +249,13 @@ Next priorities:
 
 ### What changed
 
-1. **Repo/package rename**: `codex-agent-router` renamed to `agent-router-mcp`. `package.json` name, repository URL, bin entry, and description all updated.
+1. **Repo/package rename**: `codex-agent-router` renamed to `acp-router`. `package.json` name, repository URL, bin entry, and description all updated.
 
-2. **Codex plugin packaging removed**: `.codex-plugin/`, `skills/`, `.mcp.json`, `.agents/` directories deleted. Agent Router is no longer a Codex plugin; it is a standalone npm package and MCP server.
+2. **Codex plugin packaging removed**: `.codex-plugin/`, `skills/`, `.mcp.json`, `.agents/` directories deleted. ACP Router is no longer a Codex plugin; it is a standalone npm package and MCP server.
 
 3. **MCP server migration**: Migrated from hand-rolled JSON-RPC handling to `@modelcontextprotocol/sdk` (`McpServer` + `StdioServerTransport`). Tool registration uses `server.tool()` with Zod schemas. This provides proper MCP protocol compliance and automatic schema generation.
 
-4. **Data directory changed**: `~/.codex/agent-router/` changed to `~/.agent-router/`. Hard cut, no backward compatibility. Existing v0.6.x users need to reconfigure. Override available via `AGENT_ROUTER_DATA_DIR` env var.
+4. **Data directory changed**: `~/.codex/agent-router/` changed to `~/.acp-router/`. Hard cut, no backward compatibility. Existing v0.6.x users need to reconfigure. Override available via `ACP_ROUTER_DATA_DIR` env var.
 
 5. **Tools consolidated from 11 to 8**:
    - Config get/set merged into `manage_config` with `action` param.
@@ -264,11 +264,11 @@ Next priorities:
 
 6. **ACP-only mode**: CLI fallback adapters removed. `run_agent` only supports ACP stdio transport. Agents without an available ACP adapter hard-fail with `acp_required` error and an install hint. `executeAndPersistJobRun` throws on non-`acp_stdio` launch kinds.
 
-7. **npx fallback**: When an ACP executable is not on PATH but the ACP Registry lists an npx distribution for that agent, Agent Router automatically launches the adapter via `npx --yes <package>`. The agent's `acp.launchMode` is set to `"npx"` and `acp.launchCommand` contains the npx command. `isAcpRunReady` and `resolveAcpLaunchTarget` both handle the npx case.
+7. **npx fallback**: When an ACP executable is not on PATH but the ACP Registry lists an npx distribution for that agent, ACP Router automatically launches the adapter via `npx --yes <package>`. The agent's `acp.launchMode` is set to `"npx"` and `acp.launchCommand` contains the npx command. `isAcpRunReady` and `resolveAcpLaunchTarget` both handle the npx case.
 
-8. **Recursion guard**: `AGENT_ROUTER_DEPTH` env var tracks dispatch depth. `createJob` checks depth at the start and fails with `recursion_limit` if >= 3. `AcpStdioClient.start` increments the depth in the child process environment. This prevents infinite loops when an ACP agent itself calls Agent Router.
+8. **Recursion guard**: `ACP_ROUTER_DEPTH` env var tracks dispatch depth. `createJob` checks depth at the start and fails with `recursion_limit` if >= 3. `AcpStdioClient.start` increments the depth in the child process environment. This prevents infinite loops when an ACP agent itself calls ACP Router.
 
-9. **bin entry**: `agent-router-mcp` command via `./bin/agent-router.mjs`, which imports and calls `startMcpServer()` from `mcp/server.mjs`.
+9. **bin entry**: `acp-router` command via `./bin/acp-router.mjs`, which imports and calls `startMcpServer()` from `mcp/server.mjs`.
 
 10. **Version**: Bumped to `0.7.0`.
 

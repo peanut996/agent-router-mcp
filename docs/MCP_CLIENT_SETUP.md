@@ -1,6 +1,6 @@
 # MCP Client Setup Guide
 
-This guide covers how to configure Agent Router with various MCP clients, troubleshoot common issues, and use environment variables to customize behavior.
+This guide covers how to configure ACP Router with various MCP clients, troubleshoot common issues, and use environment variables to customize behavior.
 
 ## Prerequisites
 
@@ -12,32 +12,32 @@ This guide covers how to configure Agent Router with various MCP clients, troubl
 
 ### Option 1: npx (recommended)
 
-No installation required. `npx` downloads and runs Agent Router on demand:
+No installation required. `npx` downloads and runs ACP Router on demand:
 
 ```bash
-npx agent-router-mcp
+npx acp-router
 ```
 
 This is the simplest option and ensures you always run the latest published version. All client config examples below use `npx`.
 
 ### Option 2: Global npm install
 
-Install once, then run the `agent-router-mcp` command directly:
+Install once, then run the `acp-router` command directly:
 
 ```bash
-npm install -g agent-router-mcp
-agent-router-mcp
+npm install -g acp-router
+acp-router
 ```
 
-When using a global install, client configs can use `"command": "agent-router-mcp"` with an empty args array instead of `npx`.
+When using a global install, client configs can use `"command": "acp-router"` with an empty args array instead of `npx`.
 
 ### Option 3: Clone from source
 
 For development or running unreleased changes:
 
 ```bash
-git clone https://github.com/peanut996/agent-router-mcp.git
-cd agent-router-mcp
+git clone https://github.com/peanut996/acp-router.git
+cd acp-router
 npm install
 npm start
 ```
@@ -47,9 +47,9 @@ For client configs pointing at a local clone, use the full path to the bin entry
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "node",
-      "args": ["/path/to/agent-router-mcp/bin/agent-router.mjs"]
+      "args": ["/path/to/acp-router/bin/acp-router.mjs"]
     }
   }
 }
@@ -70,23 +70,23 @@ For client configs pointing at a local clone, use the full path to the bin entry
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"]
+      "args": ["acp-router"]
     }
   }
 }
 ```
 
-After saving the file, fully quit and restart Claude Desktop. The Agent Router tools will appear in the tool list.
+After saving the file, fully quit and restart Claude Desktop. The ACP Router tools will appear in the tool list.
 
-If you installed Agent Router globally, use this instead:
+If you installed ACP Router globally, use this instead:
 
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
-      "command": "agent-router-mcp"
+    "acp-router": {
+      "command": "acp-router"
     }
   }
 }
@@ -101,9 +101,9 @@ If you installed Agent Router globally, use this instead:
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"]
+      "args": ["acp-router"]
     }
   }
 }
@@ -120,9 +120,9 @@ Reload the Cursor window after saving (Command+Shift+P > "Reload Window" on macO
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"]
+      "args": ["acp-router"]
     }
   }
 }
@@ -139,9 +139,9 @@ Restart Windsurf after saving the config.
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"]
+      "args": ["acp-router"]
     }
   }
 }
@@ -151,60 +151,60 @@ Codex picks up the MCP server from the project-level `.mcp.json` on the next ses
 
 ### Generic MCP Client
 
-Any client that supports stdio MCP servers can launch Agent Router. The server communicates over stdin/stdout using the Model Context Protocol.
+Any client that supports stdio MCP servers can launch ACP Router. The server communicates over stdin/stdout using the Model Context Protocol.
 
 | Parameter | Value |
 | --- | --- |
 | Command | `npx` |
-| Args | `["agent-router-mcp"]` |
+| Args | `["acp-router"]` |
 | Transport | stdio |
-| Server name | `agent-router` |
+| Server name | `acp-router` |
 | Server version | `0.7.0` |
 
 If your client requires a full command string instead of a JSON config:
 
 ```bash
-npx agent-router-mcp
+npx acp-router
 ```
 
 ## Environment Variables
 
-Agent Router supports two environment variables. Set them in the `env` field of your MCP client config:
+ACP Router supports two environment variables. Set them in the `env` field of your MCP client config:
 
-### AGENT_ROUTER_DATA_DIR
+### ACP_ROUTER_DATA_DIR
 
-Overrides the data directory location. Defaults to `~/.agent-router/`.
+Overrides the data directory location. Defaults to `~/.acp-router/`.
 
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"],
+      "args": ["acp-router"],
       "env": {
-        "AGENT_ROUTER_DATA_DIR": "/path/to/custom/data/dir"
+        "ACP_ROUTER_DATA_DIR": "/path/to/custom/data/dir"
       }
     }
   }
 }
 ```
 
-Use this when you want to isolate Agent Router data per project, run tests, or store data on a different volume.
+Use this when you want to isolate ACP Router data per project, run tests, or store data on a different volume.
 
-### AGENT_ROUTER_DEPTH
+### ACP_ROUTER_DEPTH
 
-Tracks the current recursion depth for the agent dispatch loop. Agent Router sets this automatically when launching child agents -- you normally do not need to set it manually.
+Tracks the current recursion depth for the agent dispatch loop. ACP Router sets this automatically when launching child agents -- you normally do not need to set it manually.
 
 The maximum allowed depth is **3**. If you need to change the starting depth for testing or nested dispatch scenarios, set it in the env config:
 
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"],
+      "args": ["acp-router"],
       "env": {
-        "AGENT_ROUTER_DEPTH": "0"
+        "ACP_ROUTER_DEPTH": "0"
       }
     }
   }
@@ -213,14 +213,14 @@ The maximum allowed depth is **3**. If you need to change the starting depth for
 
 ## Verifying the Setup
 
-After configuring your MCP client, verify that Agent Router is working:
+After configuring your MCP client, verify that ACP Router is working:
 
 1. **Check tool injection** -- Ask your MCP client to list available tools. You should see 8 tools: `discover_agents`, `manage_config`, `run_agent`, `list_jobs`, `get_job`, `tail_job_events`, `cancel_job`, `manage_sessions`.
 
 2. **Run discovery** -- Ask the client to call `discover_agents`:
 
    ```text
-   Discover local coding agents with Agent Router.
+   Discover local coding agents with ACP Router.
    ```
 
    The response should list all agents found on your system with their ACP status.
@@ -228,7 +228,7 @@ After configuring your MCP client, verify that Agent Router is working:
 3. **Run a test job** -- Create a temporary git worktree and dispatch a simple task:
 
    ```text
-   Use Agent Router to run opencode in /path/to/worktree.
+   Use ACP Router to run opencode in /path/to/worktree.
    Append one line to note.txt, then report the job id, session id, and changed files.
    ```
 
@@ -240,14 +240,14 @@ After configuring your MCP client, verify that Agent Router is working:
 | --- | --- | --- |
 | Client reports "server failed to start" | Node.js not found or version < 18 | Install Node.js >= 18 and ensure it is on PATH |
 | Client reports "command not found: npx" | npm not installed or not on PATH | Install Node.js which includes npm |
-| Server starts but immediately exits | `agent-router-mcp` package not found | Run `npx agent-router-mcp` manually in a terminal to trigger the initial download |
-| Permission denied on data directory | `~/.agent-router/` not writable | Check directory permissions or set `AGENT_ROUTER_DATA_DIR` to a writable path |
+| Server starts but immediately exits | `acp-router` package not found | Run `npx acp-router` manually in a terminal to trigger the initial download |
+| Permission denied on data directory | `~/.acp-router/` not writable | Check directory permissions or set `ACP_ROUTER_DATA_DIR` to a writable path |
 
 ### Tools not appearing
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| No Agent Router tools in the client | Config file not loaded | Restart the client after editing the config; verify the JSON is valid |
+| No ACP Router tools in the client | Config file not loaded | Restart the client after editing the config; verify the JSON is valid |
 | Only some tools appear | Client filters tools by name or capability | Check the client's tool filtering settings |
 | Tools appear but calls fail | Server process crashed or hung | Check the client's MCP server logs for stderr output |
 
@@ -263,10 +263,10 @@ After configuring your MCP client, verify that Agent Router is working:
 
 ### Debugging tips
 
-- Run Agent Router standalone to see stderr output:
+- Run ACP Router standalone to see stderr output:
 
   ```bash
-  npx agent-router-mcp
+  npx acp-router
   ```
 
   The server reads JSON-RPC messages from stdin and writes responses to stdout. Any errors or diagnostics go to stderr.
@@ -274,19 +274,19 @@ After configuring your MCP client, verify that Agent Router is working:
 - Check the data directory for state:
 
   ```bash
-  ls -la ~/.agent-router/
-  cat ~/.agent-router/config.json
-  cat ~/.agent-router/registry.json
+  ls -la ~/.acp-router/
+  cat ~/.acp-router/config.json
+  cat ~/.acp-router/registry.json
   ```
 
 - Inspect job logs for failure details:
 
   ```bash
-  cat ~/.agent-router/logs/<jobId>.jsonl
+  cat ~/.acp-router/logs/<jobId>.jsonl
   ```
 
-- Use `AGENT_ROUTER_DATA_DIR` to isolate a test run from your real data:
+- Use `ACP_ROUTER_DATA_DIR` to isolate a test run from your real data:
 
   ```bash
-  AGENT_ROUTER_DATA_DIR=/tmp/agent-router-test npx agent-router-mcp
+  ACP_ROUTER_DATA_DIR=/tmp/acp-router-test npx acp-router
   ```

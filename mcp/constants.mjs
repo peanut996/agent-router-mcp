@@ -1,11 +1,11 @@
 import os from "node:os";
 import path from "node:path";
 
-const SERVER_NAME = "agent-router";
+const SERVER_NAME = "acp-router";
 const SERVER_VERSION = "0.8.0";
-const DATA_DIR = process.env.AGENT_ROUTER_DATA_DIR
-  ? path.resolve(process.env.AGENT_ROUTER_DATA_DIR)
-  : path.join(os.homedir(), ".agent-router");
+const DATA_DIR = process.env.ACP_ROUTER_DATA_DIR
+  ? path.resolve(process.env.ACP_ROUTER_DATA_DIR)
+  : path.join(os.homedir(), ".acp-router");
 const REGISTRY_PATH = path.join(DATA_DIR, "registry.json");
 const CONFIG_PATH = path.join(DATA_DIR, "config.json");
 const ACP_REGISTRY_CACHE_PATH = path.join(DATA_DIR, "acp-registry-cache.json");

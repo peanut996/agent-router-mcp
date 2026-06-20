@@ -38,10 +38,10 @@ class AcpStdioClient {
   }
 
   async start() {
-    const currentDepth = Number.parseInt(process.env.AGENT_ROUTER_DEPTH ?? "0", 10) || 0;
+    const currentDepth = Number.parseInt(process.env.ACP_ROUTER_DEPTH ?? "0", 10) || 0;
     const childEnv = {
       ...this.env,
-      AGENT_ROUTER_DEPTH: String(currentDepth + 1)
+      ACP_ROUTER_DEPTH: String(currentDepth + 1)
     };
     this.child = spawn(this.command, this.args, {
       cwd: this.cwd,

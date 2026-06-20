@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# agent-router-dispatch: Create a worktree, dispatch an agent, collect results.
+# acp-router-dispatch: Create a worktree, dispatch an agent, collect results.
 # Usage: dispatch.sh --repo <path> --prompt <text> [--branch <branch>] [--agent <id>] [--cleanup]
 
 REPO=""
@@ -52,8 +52,8 @@ if [[ -z "$BRANCH" ]]; then
 fi
 
 # Create worktree
-WT_DIR="/tmp/agent-router-wt-$(date +%s)-$$"
-BASE_BRANCH="agent-router-base-$(date +%s)-$$"
+WT_DIR="/tmp/acp-router-wt-$(date +%s)-$$"
+BASE_BRANCH="acp-router-base-$(date +%s)-$$"
 
 echo "==> Creating worktree at $WT_DIR (branch: $BRANCH)" >&2
 cd "$REPO_ABS"
@@ -71,7 +71,7 @@ if [[ -n "$AGENT" ]]; then
   AGENT_FLAG="--agent $AGENT"
 fi
 
-RESULT=$(agent-router run \
+RESULT=$(acp-router-cli run \
   --worktree "$WT_DIR" \
   --prompt "$PROMPT" \
   $AGENT_FLAG \
@@ -97,5 +97,5 @@ if [[ "$STATUS" == "completed" ]]; then
 else
   echo "==> Agent status: $STATUS" >&2
   echo "==> Worktree kept for inspection: $WT_DIR" >&2
-  echo "==> Job log: ~/.agent-router/logs/" >&2
+  echo "==> Job log: ~/.acp-router/logs/" >&2
 fi

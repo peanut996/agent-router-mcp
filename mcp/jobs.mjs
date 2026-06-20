@@ -43,7 +43,7 @@ import { AcpStdioClient, runAcpStdioJob } from "./acp-client.mjs";
 const ACTIVE_RUNS = new Map();
 
 async function createJob(args) {
-  const recursionDepth = Number.parseInt(process.env.AGENT_ROUTER_DEPTH ?? "0", 10) || 0;
+  const recursionDepth = Number.parseInt(process.env.ACP_ROUTER_DEPTH ?? "0", 10) || 0;
   if (recursionDepth >= MAX_RECURSION_DEPTH) {
     return {
       status: "failed",

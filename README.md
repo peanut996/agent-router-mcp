@@ -1,36 +1,36 @@
-# Agent Router
+# ACP Router
 
 Generic MCP server for routing coding tasks to local ACP agents.
 
-[![npm version](https://img.shields.io/npm/v/agent-router-mcp.svg)](https://www.npmjs.com/package/agent-router-mcp)
+[![npm version](https://img.shields.io/npm/v/acp-router.svg)](https://www.npmjs.com/package/acp-router)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node >=18](https://img.shields.io/badge/node-%3E%3D18-green.svg)](https://nodejs.org/)
 
-Agent Router discovers locally installed coding agents that speak the [Agent Client Protocol](https://agentclientprotocol.com/) (ACP), routes tasks to them inside isolated git worktrees, and tracks jobs, sessions, and event logs. It works with any MCP-compatible client -- Claude Desktop, Cursor, Windsurf, Codex, and others.
+ACP Router discovers locally installed coding agents that speak the [Agent Client Protocol](https://agentclientprotocol.com/) (ACP), routes tasks to them inside isolated git worktrees, and tracks jobs, sessions, and event logs. It works with any MCP-compatible client -- Claude Desktop, Cursor, Windsurf, Codex, and others.
 
 ## Quick Start
 
-Run Agent Router directly without installing:
+Run ACP Router directly without installing:
 
 ```bash
-npx agent-router-mcp
+npx acp-router
 ```
 
 Or install globally and run:
 
 ```bash
-npm install -g agent-router-mcp
-agent-router-mcp
+npm install -g acp-router
+acp-router
 ```
 
-Add Agent Router to any MCP client by pointing it at the `agent-router-mcp` command:
+Add ACP Router to any MCP client by pointing it at the `acp-router` command:
 
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"]
+      "args": ["acp-router"]
     }
   }
 }
@@ -40,7 +40,7 @@ See [MCP Client Setup](#mcp-client-setup) below for client-specific configuratio
 
 ## MCP Client Setup
 
-Agent Router is a standard stdio MCP server. Any MCP client that supports `command`-based servers can launch it. Below are config examples for common clients.
+ACP Router is a standard stdio MCP server. Any MCP client that supports `command`-based servers can launch it. Below are config examples for common clients.
 
 ### Claude Desktop
 
@@ -49,9 +49,9 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"]
+      "args": ["acp-router"]
     }
   }
 }
@@ -66,9 +66,9 @@ Add to `.cursor/mcp.json` in your project root (or user-level config):
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"]
+      "args": ["acp-router"]
     }
   }
 }
@@ -81,9 +81,9 @@ Add to your Windsurf MCP server configuration:
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"]
+      "args": ["acp-router"]
     }
   }
 }
@@ -96,9 +96,9 @@ Add to `.mcp.json` in your project root:
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"]
+      "args": ["acp-router"]
     }
   }
 }
@@ -106,67 +106,67 @@ Add to `.mcp.json` in your project root:
 
 ### Generic MCP Client
 
-Any client that supports stdio MCP servers can use Agent Router with the following parameters:
+Any client that supports stdio MCP servers can use ACP Router with the following parameters:
 
 | Field | Value |
 | --- | --- |
 | Command | `npx` |
-| Args | `["agent-router-mcp"]` |
+| Args | `["acp-router"]` |
 | Transport | stdio |
 
-If you installed globally, use `"command": "agent-router-mcp"` with an empty args array instead.
+If you installed globally, use `"command": "acp-router"` with an empty args array instead.
 
 ## CLI
 
-Agent Router ships with a command-line interface (`agent-router`) for use outside of an MCP client. Install globally to get the command on your PATH:
+ACP Router ships with a command-line interface (`acp-router-cli`) for use outside of an MCP client. Install globally to get the command on your PATH:
 
 ```bash
-npm install -g agent-router-mcp
+npm install -g acp-router
 ```
 
 ### Commands
 
 | Command | Description |
 | --- | --- |
-| `agent-router run` | Run a coding agent in a worktree (sync, blocks until done) |
-| `agent-router agents` | List discovered agents |
-| `agent-router models <agent>` | Probe an agent for available models |
-| `agent-router jobs` | List jobs |
-| `agent-router job <id>` | Get job details |
-| `agent-router tail <id>` | Tail job events |
-| `agent-router cancel <id>` | Cancel a running job |
-| `agent-router sessions` | List sessions |
-| `agent-router config` | Get or set config |
+| `acp-router-cli run` | Run a coding agent in a worktree (sync, blocks until done) |
+| `acp-router-cli agents` | List discovered agents |
+| `acp-router-cli models <agent>` | Probe an agent for available models |
+| `acp-router-cli jobs` | List jobs |
+| `acp-router-cli job <id>` | Get job details |
+| `acp-router-cli tail <id>` | Tail job events |
+| `acp-router-cli cancel <id>` | Cancel a running job |
+| `acp-router-cli sessions` | List sessions |
+| `acp-router-cli config` | Get or set config |
 
 ### Examples
 
 ```bash
 # List available agents
-agent-router agents
+acp-router-cli agents
 
 # Probe models for OpenCode
-agent-router models opencode
+acp-router-cli models opencode
 
 # Run a job (sync, prints JSON result when done)
-agent-router run --worktree /path/to/repo --prompt "Fix the failing tests" --agent opencode
+acp-router-cli run --worktree /path/to/repo --prompt "Fix the failing tests" --agent opencode
 
 # Run with streaming events to stderr
-agent-router run --worktree /path/to/repo --prompt "Refactor utils" --stream
+acp-router-cli run --worktree /path/to/repo --prompt "Refactor utils" --stream
 
 # Run with a specific model and permission profile
-agent-router run --worktree /path/to/repo --prompt "Add tests" --model gpt-5 --permission-profile acceptEdits
+acp-router-cli run --worktree /path/to/repo --prompt "Add tests" --model gpt-5 --permission-profile acceptEdits
 
 # Tail events for a running async job
-agent-router tail <job-id>
+acp-router-cli tail <job-id>
 
 # Cancel a job
-agent-router cancel <job-id> --reason "no longer needed"
+acp-router-cli cancel <job-id> --reason "no longer needed"
 
 # Get current config
-agent-router config
+acp-router-cli config
 
 # Set default agent
-agent-router config --set --defaultAgent opencode
+acp-router-cli config --set --defaultAgent opencode
 ```
 
 ### `run` options
@@ -184,23 +184,23 @@ agent-router config --set --defaultAgent opencode
 | `--session-id <id>` | Continue an existing session | -- |
 | `--stream` | Stream events to stderr while running | off |
 
-Run `agent-router <command> --help` for command-specific options.
+Run `acp-router-cli <command> --help` for command-specific options.
 
 ## Tools
 
-Agent Router exposes 9 MCP tools:
+ACP Router exposes 9 MCP tools:
 
 | Tool | Description | Key Params |
 | --- | --- | --- |
 | `discover_agents` | Discover locally installed coding agents and their ACP adapter status. Returns transport, ACP availability, registry metadata, and install hints. | `refresh` (bool, optional), `includeNotInstalled` (bool, optional) |
 | `get_agent_models` | Probe an ACP agent for its available model list. Starts a temporary ACP session, reads config options, and returns model choices. Use this before `run_agent` to discover valid model ids. | `agent` (string, required), `worktree` (string, optional) |
-| `manage_config` | Get or set Agent Router configuration including default agent, per-mode defaults, disabled agents, and safety policy. | `action` ("get" \| "set"), `defaultAgent`, `disabledAgents`, `launchExternalAgents`, `inheritEnvironment`, `allowBypassPermissions`, `defaultPermissionProfile`, `registryEnabled`, `registryUrl`, `registryCacheTtlSec`, `modeDefaults` |
+| `manage_config` | Get or set ACP Router configuration including default agent, per-mode defaults, disabled agents, and safety policy. | `action` ("get" \| "set"), `defaultAgent`, `disabledAgents`, `launchExternalAgents`, `inheritEnvironment`, `allowBypassPermissions`, `defaultPermissionProfile`, `registryEnabled`, `registryUrl`, `registryCacheTtlSec`, `modeDefaults` |
 | `run_agent` | Run a coding agent in an isolated worktree. Requires an absolute worktree path. Supports sync and async execution. ACP-only -- CLI fallback is not supported. | `agent` (string, optional), `worktree` (string, required), `prompt` (string, required), `mode`, `async` (bool), `sessionId`, `timeoutSec`, `permissionProfile`, `model`, `collectDiff`, `launchExternalAgents`, `inheritEnvironment`, `metadata` |
-| `list_jobs` | List Agent Router jobs from the local registry with optional filters. | `status`, `agent`, `worktree`, `limit` |
-| `get_job` | Get an Agent Router job by id. | `jobId` (string, required) |
+| `list_jobs` | List ACP Router jobs from the local registry with optional filters. | `status`, `agent`, `worktree`, `limit` |
+| `get_job` | Get an ACP Router job by id. | `jobId` (string, required) |
 | `tail_job_events` | Return newly recorded job events from the JSONL event log for polling-style progress updates. Events are streamed in real-time for long-running async jobs. | `jobId` (string, required), `afterEventIndex`, `limit`, `includeLogTail`, `logTailBytes` |
 | `cancel_job` | Cancel a job and terminate an active child process when the current MCP server owns it. | `jobId` (string, required), `reason` (string, optional) |
-| `manage_sessions` | List, continue, or archive Agent Router sessions. | `action` ("list" \| "continue" \| "archive"), `sessionId`, `prompt`, `agent`, `worktree`, `async`, `includeArchived`, `limit`, `launchExternalAgents`, `inheritEnvironment`, `timeoutSec` |
+| `manage_sessions` | List, continue, or archive ACP Router sessions. | `action` ("list" \| "continue" \| "archive"), `sessionId`, `prompt`, `agent`, `worktree`, `async`, `includeArchived`, `limit`, `launchExternalAgents`, `inheritEnvironment`, `timeoutSec` |
 
 ### Permission Profiles
 
@@ -208,7 +208,7 @@ Permission profiles control what the spawned agent is allowed to do. They map to
 
 | Profile | Description |
 | --- | --- |
-| `plan` | Read-only / planning mode. The agent should not modify files. Agent Router also detects `plan_mode_violation` when an agent modifies files despite this profile (guards against upstream ACP adapters that don't enforce read-only). |
+| `plan` | Read-only / planning mode. The agent should not modify files. ACP Router also detects `plan_mode_violation` when an agent modifies files despite this profile (guards against upstream ACP adapters that don't enforce read-only). |
 | `acceptEdits` | The agent may edit files within the worktree. |
 | `bypassPermissions` | The agent bypasses all permission checks (default). |
 
@@ -227,13 +227,13 @@ This is useful when an agent's default model is unavailable (e.g. insufficient b
 
 ## ACP-Only Mode
 
-Agent Router runs agents exclusively through the Agent Client Protocol (ACP). The previous CLI fallback adapters have been removed.
+ACP Router runs agents exclusively through the Agent Client Protocol (ACP). The previous CLI fallback adapters have been removed.
 
 ### How it works
 
-1. When you call `run_agent`, Agent Router checks whether the selected agent has an available ACP adapter.
+1. When you call `run_agent`, ACP Router checks whether the selected agent has an available ACP adapter.
 2. If the ACP executable is on `PATH`, it launches directly.
-3. If the ACP executable is not on `PATH` but the ACP Registry lists an npx distribution for that agent, Agent Router automatically launches it via `npx --yes <package>`.
+3. If the ACP executable is not on `PATH` but the ACP Registry lists an npx distribution for that agent, ACP Router automatically launches it via `npx --yes <package>`.
 4. If no ACP adapter is available at all, the job hard-fails with an `acp_required` error and an install hint telling you how to install the adapter.
 
 ### When ACP is not available
@@ -256,7 +256,7 @@ Agent Router runs agents exclusively through the Agent Client Protocol (ACP). Th
 
 ## Configuration
 
-Agent Router stores its configuration in `~/.agent-router/config.json`.
+ACP Router stores its configuration in `~/.acp-router/config.json`.
 
 ### Config fields
 
@@ -284,25 +284,25 @@ manage_config with action "set", defaultAgent "opencode"
 
 ## Data Directory and Paths
 
-Agent Router stores all data under `~/.agent-router/`:
+ACP Router stores all data under `~/.acp-router/`:
 
 | Path | Description |
 | --- | --- |
-| `~/.agent-router/config.json` | Configuration file |
-| `~/.agent-router/registry.json` | Job and session registry |
-| `~/.agent-router/logs/` | Per-job JSONL event logs |
-| `~/.agent-router/acp-registry-cache.json` | ACP Registry metadata cache |
+| `~/.acp-router/config.json` | Configuration file |
+| `~/.acp-router/registry.json` | Job and session registry |
+| `~/.acp-router/logs/` | Per-job JSONL event logs |
+| `~/.acp-router/acp-registry-cache.json` | ACP Registry metadata cache |
 
-Override the data directory by setting the `AGENT_ROUTER_DATA_DIR` environment variable:
+Override the data directory by setting the `ACP_ROUTER_DATA_DIR` environment variable:
 
 ```json
 {
   "mcpServers": {
-    "agent-router-mcp": {
+    "acp-router": {
       "command": "npx",
-      "args": ["agent-router-mcp"],
+      "args": ["acp-router"],
       "env": {
-        "AGENT_ROUTER_DATA_DIR": "/custom/path/to/data"
+        "ACP_ROUTER_DATA_DIR": "/custom/path/to/data"
       }
     }
   }
@@ -311,25 +311,25 @@ Override the data directory by setting the `AGENT_ROUTER_DATA_DIR` environment v
 
 ## Recursion Guard
 
-Agent Router prevents infinite agent dispatch loops using the `AGENT_ROUTER_DEPTH` environment variable.
+ACP Router prevents infinite agent dispatch loops using the `ACP_ROUTER_DEPTH` environment variable.
 
-- Each time Agent Router launches a child agent, it increments `AGENT_ROUTER_DEPTH` by 1 in the child process environment.
+- Each time ACP Router launches a child agent, it increments `ACP_ROUTER_DEPTH` by 1 in the child process environment.
 - The maximum recursion depth is **3**.
-- When `run_agent` is called and `AGENT_ROUTER_DEPTH` is already at or above 3, the job immediately fails with a `recursion_limit` error.
+- When `run_agent` is called and `ACP_ROUTER_DEPTH` is already at or above 3, the job immediately fails with a `recursion_limit` error.
 
-This guards against scenarios where an ACP agent itself calls Agent Router to dispatch another agent, creating a loop. The depth counter propagates through the process tree so nested dispatches are tracked across the entire chain.
+This guards against scenarios where an ACP agent itself calls ACP Router to dispatch another agent, creating a loop. The depth counter propagates through the process tree so nested dispatches are tracked across the entire chain.
 
 ## Plan Mode Violation Detection
 
-When `permissionProfile` is set to `plan`, the agent is expected to operate in read-only mode. However, some upstream ACP adapters do not enforce read-only mode. Agent Router detects this by checking for file changes in the worktree after a `plan` job completes.
+When `permissionProfile` is set to `plan`, the agent is expected to operate in read-only mode. However, some upstream ACP adapters do not enforce read-only mode. ACP Router detects this by checking for file changes in the worktree after a `plan` job completes.
 
 If files were modified despite the `plan` profile, the job result includes a `plan_mode_violation` warning listing the changed files. This helps identify adapter bugs and prevents unintended modifications during planning.
 
 ## Development
 
 ```bash
-git clone https://github.com/peanut996/agent-router-mcp.git
-cd agent-router-mcp
+git clone https://github.com/peanut996/acp-router.git
+cd acp-router
 npm install
 ```
 

@@ -7,9 +7,9 @@ import { readConfig } from "../mcp/storage.mjs";
 import { probeAgentModels } from "../mcp/acp-client.mjs";
 import { safeEnv } from "../mcp/utils.mjs";
 
-const HELP = `agent-router-mcp CLI
+const HELP = `acp-router CLI
 
-Usage: agent-router <command> [options]
+Usage: acp-router-cli <command> [options]
 
 Commands:
   run       Run a coding agent in a worktree (sync, blocks until done)
@@ -22,7 +22,7 @@ Commands:
   sessions  List sessions
   config    Get or set config
 
-Run "agent-router <command> --help" for command-specific options.
+Run "acp-router-cli <command> --help" for command-specific options.
 `;
 
 function parseArgs(argv) {
@@ -52,7 +52,7 @@ function printJson(obj) {
 
 async function cmdRun(args) {
   if (args.help) {
-    process.stdout.write(`agent-router run -- Run a coding agent (sync, blocks until done)
+    process.stdout.write(`acp-router-cli run -- Run a coding agent (sync, blocks until done)
 
 Options:
   --worktree <path>     Absolute path to worktree (required)
@@ -238,6 +238,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  process.stderr.write(`agent-router: ${error.message}\n`);
+  process.stderr.write(`acp-router-cli: ${error.message}\n`);
   process.exit(1);
 });
